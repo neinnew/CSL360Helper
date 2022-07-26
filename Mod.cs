@@ -1,6 +1,7 @@
 ﻿using System;
 using ICities;
 using UnityEngine;
+using CitiesHarmony.API;
 using ColossalFramework.UI;
 
 namespace CSL360Helper
@@ -19,6 +20,24 @@ namespace CSL360Helper
         private uint? loadedCurrentFrameIndex = null;
         private uint frameInterval = 100;
         public static uint referenceFramePoint;
+
+        private static readonly string[] FixTiltLabels =
+        {
+            "Disable",
+            "90°",
+            "0°",
+            "-90°"
+        };
+
+        public void OnEnabled()
+        {
+            HarmonyHelper.DoOnHarmonyReady(() => Patcher.PatchAll());
+        }
+
+        public void OnDisabled()
+        {
+            if (HarmonyHelper.IsHarmonyInstalled) Patcher.UnpatchAll();
+        }
 
         public void OnSettingsUI(UIHelperBase helper)
         {
@@ -52,6 +71,32 @@ namespace CSL360Helper
             textFieldReferenceSimulationTime.size = new Vector2(70f, textFieldReferenceSimulationTime.size.y);
             var parent = textFieldReferenceSimulationTime.parent as UIPanel;
             parent.autoLayoutDirection = LayoutDirection.Horizontal;
+
+
+
+            group.AddDropdown("Fix Tilt Value", FixTiltLabels, 0, value =>
+            {
+                switch (value)
+                {
+                    case 0:
+                        CameraPatch.fixTilt = false;
+                        break;
+                    case 1:
+                        CameraPatch.fixedTiltValue = 90f;
+                        CameraPatch.fixTilt = true;
+                        break;
+                    case 2:
+                        CameraPatch.fixedTiltValue = 0f;
+                        CameraPatch.fixTilt = true;
+                        break;
+                    case 3:
+                        CameraPatch.fixedTiltValue = -90f;
+                        CameraPatch.fixTilt = true;
+                        break;
+                    default:
+                        goto case 0;
+                }
+            });
         }
 
         public override void OnLevelLoaded(LoadMode load)
@@ -84,7 +129,6 @@ namespace CSL360Helper
 
         private UIPanel panel;
         private UIPanel panel2;
-
 
         public override void OnUpdate(float realTimeDelta, float simulationTimeDelta)
         {
